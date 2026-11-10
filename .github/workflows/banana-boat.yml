@@ -1,0 +1,26 @@
+name: Banana Boat Motion (4 photo inputs)
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'scripts/render-banana-boat.sh'
+      - '.github/workflows/banana-boat.yml'
+      - 'assets/banana-boat/**'
+permissions:
+  contents: read
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install FFmpeg
+        run: sudo apt-get update -qq && sudo apt-get install -y ffmpeg
+      - name: Render vertical MP4
+        run: bash scripts/render-banana-boat.sh
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: banana-boat-motion
+          path: output/banana-boat-motion.mp4
+          retention-days: 7

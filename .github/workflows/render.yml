@@ -27,8 +27,11 @@ jobs:
           node-version: '22'
       - name: Install dependencies
         run: npm install --no-audit --no-fund
-      - name: FFmpeg check
-        run: ffmpeg -version | head -n 1
+      - name: Install FFmpeg
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg
+          ffmpeg -version | head -n 1
       - name: Render
         env:
           DURATION: ${{ github.event_name == 'workflow_dispatch' && inputs.duration || '10' }}

@@ -1,0 +1,47 @@
+name: Render ERP Explainer
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/render.yml'
+      - 'projects/**'
+      - 'scripts/**'
+      - 'package.json'
+  workflow_dispatch:
+    inputs:
+      duration:
+        description: 'Render seconds: 10 smoke test, 300 full benchmark'
+        required: true
+        default: '10'
+        type: choice
+        options: ['10', '30', '300']
+permissions:
+  contents: read
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: FFmpeg check
+        run: ffmpeg -version | head -n 1
+      - name: Render
+        env:
+          DURATION: ${{ github.event_name == 'workflow_dispatch' && inputs.duration || '10' }}
+        run: npm run render
+      - name: Validate MP4
+        env:
+          DURATION: ${{ github.event_name == 'workflow_dispatch' && inputs.duration || '10' }}
+        run: |
+          test -s output/erp-gagal.mp4
+          python3 scripts/validate.py output/erp-gagal.mp4 "$DURATION"
+      - name: Upload MP4 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: erp-explainer-${{ github.run_id }}
+          path: output/erp-gagal.mp4
+          retention-days: 7

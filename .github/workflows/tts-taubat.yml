@@ -1,0 +1,42 @@
+name: Taubat Indonesian Male MP3
+on:
+  push:
+    paths:
+      - '.github/workflows/tts-taubat.yml'
+      - 'scripts/tts_taubat.py'
+  workflow_dispatch:
+    inputs:
+      voice:
+        description: 'Indonesian male narrator'
+        type: choice
+        required: true
+        default: danu
+        options: [danu, bimo]
+permissions:
+  contents: read
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install TTS and FFmpeg
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg espeak-ng
+          python -m pip install --upgrade pip
+          python -m pip install "git+https://github.com/ARBO-TEAM/arboTTS.git" espeakng-loader phonemizer
+      - name: Generate Indonesian male MP3
+        env:
+          VOICE: ${{ inputs.voice || 'danu' }}
+        run: python scripts/tts_taubat.py
+      - name: Upload MP3
+        uses: actions/upload-artifact@v4
+        with:
+          name: taubat-mp3-${{ github.run_id }}
+          path: output/taubat_*_30s.mp3
+          retention-days: 30
+          if-no-files-found: error
